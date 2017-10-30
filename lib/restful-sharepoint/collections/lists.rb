@@ -1,12 +1,12 @@
 module RestfulSharePoint
-  class ListItems < Collection
+  class Lists < Collection
 
     def self.object_class
-      ListItem
+      List
     end
 
     def endpoint
-      "#{@parent.endpoint}/Items"
+      "#{@parent.endpoint}/Lists"
     end
 
   end

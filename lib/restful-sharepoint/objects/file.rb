@@ -2,7 +2,7 @@ module RestfulSharePoint
   class File < Object
 
     def endpoint
-      "#{parent.endpoint}/File"
+      "#{@parent.endpoint}/File"
     end
 
     def content
