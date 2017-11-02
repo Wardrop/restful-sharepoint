@@ -2,7 +2,8 @@ Provides a convenient object model to the OData REST API of SharePoint 2013 and 
 
 No unit tests as of yet.
 
-== Examples ==
+Examples
+--------
 ``` ruby
 require 'restful-sharepoint'
 connection = RestfulSharePoint::Connection.new('http://sharepoint/mysite/', 'username', 'password')
