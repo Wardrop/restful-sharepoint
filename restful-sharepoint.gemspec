@@ -6,7 +6,7 @@ Gem::Specification.new 'restful-sharepoint', RestfulSharePoint::VERSION do |s|
   s.description       = 'Library accessing SharePoint resources via OData REST API'
   s.authors           = ['Tom Wardrop']
   s.email             = 'tomw@msc.qld.gov.au'
-  s.homepage          = ''
+  s.homepage          = 'https://github.com/Wardrop/restful-sharepoint'
   s.license           = 'MIT'
   s.files             = Dir.glob(`git ls-files`.split("\n") - %w[.gitignore])
   s.has_rdoc          = 'yard'
