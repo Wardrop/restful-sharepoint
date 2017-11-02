@@ -2,8 +2,8 @@ $LOAD_PATH.unshift File.expand_path('../lib', __FILE__)
 require 'restful-sharepoint/version'
 
 Gem::Specification.new 'restful-sharepoint', RestfulSharePoint::VERSION do |s|
-  s.summary           = 'Library accessing SharePoint resources via OData REST API'
-  s.description       = 'Library accessing SharePoint resources via OData REST API'
+  s.summary           = 'Provides a convenient object model to the OData REST API of SharePoint 2013 and newer.'
+  s.description       = 'Provides a convenient object model to the OData REST API of SharePoint 2013 and newer.'
   s.authors           = ['Tom Wardrop']
   s.email             = 'tomw@msc.qld.gov.au'
   s.homepage          = 'https://github.com/Wardrop/restful-sharepoint'
