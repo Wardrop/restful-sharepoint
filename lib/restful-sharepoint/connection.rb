@@ -50,7 +50,7 @@ module RestfulSharePoint
     def parse(str)
       data = JSON.parse(str)
       raise RestError, "(#{data['error']['code']}): #{data['error']['message']['value']}" if data['error']
-      parse_tree(data['d']['results'] || data['d'])
+      parse_tree(data['d'])
     end
 
     def parse_tree(tree)

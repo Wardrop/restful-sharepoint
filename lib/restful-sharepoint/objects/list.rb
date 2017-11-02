@@ -1,7 +1,7 @@
 module RestfulSharePoint
   class List < Object
 
-    def self.from_title(connection, title)
+    def self.from_title(title, connection)
       new(connection: connection).tap do |list|
         list.define_singleton_method(:endpoint) { "/_api/web/lists/getbytitle('#{URI.encode title}')" }
       end

@@ -1,5 +1,5 @@
 module RestfulSharePoint
-  class Object
+  class Object < CommonBase
     DEFAULT_OPTIONS = {}
 
     def initialize(parent: nil, connection: nil, properties: nil, id: nil, options: {})
@@ -8,10 +8,14 @@ module RestfulSharePoint
       @connection = connection || @parent.connection
       self.properties = properties
       @id = id
-      @options = self.class::DEFAULT_OPTIONS.merge(options)
+      self.options = options
     end
 
     attr_accessor :connection
+    attr_reader :options
+    def options=(options)
+      @options = self.class::DEFAULT_OPTIONS.merge(options)
+    end
 
     attr_writer :endpoint
     def endpoint
@@ -22,10 +26,11 @@ module RestfulSharePoint
       @properties = properties
       @properties&.each do |k,v|
         if v.respond_to?(:keys) && v['__deferred']
-          define_singleton_method(k) do
+          define_singleton_method(k) do |options = {}|
             if Hash === properties[k] && properties[k]['__deferred']
-              fetch_deferred(k)
+              fetch_deferred(k, options)
             else
+              warn("`options` have been ignored as `#{k}` has already been loaded") unless options.empty?
               properties[k]
             end
           end
@@ -37,12 +42,20 @@ module RestfulSharePoint
     end
 
     def properties
-      @properties || self.properties = connection.get(endpoint, @options)
+      @properties || self.properties = connection.get(endpoint, options: @options)
     end
 
-    def fetch_deferred(property)
-      data = connection.get @properties[property]['__deferred']['uri']
+    def values
+      properties.dup.each { |k,v| properties[k] = v.values if v.is_a?(Object) || v.is_a?(Collection) }
+    end
+
+    def fetch_deferred(property, options = {})
+      data = connection.get(@properties[property]['__deferred']['uri'], options: options)
       @properties[property] = objectify(data)
+    end
+
+    def to_json(*args, &block)
+      properties.to_json(*args, &block)
     end
 
     def method_missing(method, *args, &block)
@@ -57,17 +70,6 @@ module RestfulSharePoint
 
     def respond_to_missing?(method, include_all = false)
       properties.respond_to?(method, include_all)
-    end
-
-    # Converts the given enumerable tree to a collection or object.
-    def objectify(tree)
-      if Array === tree && !tree.empty?
-        pattern, klass = COLLECTION_MAP.find { |pattern,| pattern.match(tree[0]['__metadata']['type'])  }
-        klass ? RestfulSharePoint.const_get(klass).new(parent: self, collection: tree) : tree
-      elsif tree['__metadata']
-        pattern, klass = OBJECT_MAP.find { |pattern,| pattern.match(tree['__metadata']['type'])  }
-        klass ? RestfulSharePoint.const_get(klass).new(parent: self, properties: tree) : tree
-      end
     end
 
   end

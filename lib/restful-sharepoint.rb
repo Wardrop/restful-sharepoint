@@ -23,5 +23,10 @@ module RestfulSharePoint
   }
 end
 
-require_relative_pattern './restful-sharepoint/*.rb'
+require_relative './restful-sharepoint/version.rb'
+require_relative './restful-sharepoint/error.rb'
+require_relative './restful-sharepoint/connection.rb'
+require_relative './restful-sharepoint/common_base.rb'
+require_relative './restful-sharepoint/object.rb'
+require_relative './restful-sharepoint/collection.rb'
 require_relative_pattern './restful-sharepoint/*/*.rb'

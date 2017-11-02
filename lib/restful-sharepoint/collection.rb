@@ -1,5 +1,5 @@
 module RestfulSharePoint
-  class Collection
+  class Collection < CommonBase
     DEFAULT_OPTIONS = {}
 
     def self.object_class
@@ -10,10 +10,15 @@ module RestfulSharePoint
       @parent = parent
       @connection = connection || @parent.connection # Iterate collection and coerce each into into a ListItem
       self.collection = collection
-      @options = self.class::DEFAULT_OPTIONS.merge(options)
+      self.options = options
     end
 
     attr_accessor :connection
+
+    attr_reader :options
+    def options=(options)
+      @options = self.class::DEFAULT_OPTIONS.merge(options)
+    end
 
     attr_writer :endpoint
     def endpoint
@@ -29,11 +34,19 @@ module RestfulSharePoint
     end
 
     def collection
-      @collection || self.collection = connection.get(endpoint)
+      @collection || self.collection = connection.get(endpoint, options: @options)
+    end
+
+    def values
+      collection.dup.each { |k,v| properties[k] = v.values if v.is_a?(Object) || v.is_a?(Collection) }
     end
 
     def next
-      self.new(@connection, @connection.get(@collection['__next']))
+      self.new(@connection, @connection.get(collection['__next']))
+    end
+
+    def to_json(*args, &block)
+      collection.to_json(*args, &block)
     end
 
     def method_missing(method, *args, &block)
@@ -42,14 +55,6 @@ module RestfulSharePoint
 
     def respond_to_missing?(method, include_all = false)
       collection.respond_to?(method, include_all)
-    end
-
-    # Converts the given enumerable tree to a collection or object.
-    def objectify(tree)
-      if tree['__metadata']
-        pattern, klass = OBJECT_MAP.find { |pattern,| pattern.match(tree['__metadata']['type'])  }
-        klass ? RestfulSharePoint.const_get(klass).new(parent: self, properties: tree) : tree
-      end
     end
   end
 end
