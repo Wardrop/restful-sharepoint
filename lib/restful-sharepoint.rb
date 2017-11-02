@@ -2,7 +2,6 @@ require 'json'
 require 'httpi'
 require 'curb'
 require 'cgi'
-require 'require_pattern'
 
 HTTPI.adapter = :curb
 
@@ -29,4 +28,14 @@ require_relative './restful-sharepoint/connection.rb'
 require_relative './restful-sharepoint/common-base.rb'
 require_relative './restful-sharepoint/object.rb'
 require_relative './restful-sharepoint/collection.rb'
-require_relative_pattern './restful-sharepoint/*/*.rb'
+
+require_relative './restful-sharepoint/objects/file.rb'
+require_relative './restful-sharepoint/objects/attachment.rb'
+require_relative './restful-sharepoint/objects/list-item.rb'
+require_relative './restful-sharepoint/objects/list.rb'
+require_relative './restful-sharepoint/objects/web.rb'
+
+require_relative './restful-sharepoint/collections/attachments.rb'
+require_relative './restful-sharepoint/collections/list-items.rb'
+require_relative './restful-sharepoint/collections/lists.rb'
+require_relative './restful-sharepoint/collections/webs.rb'
