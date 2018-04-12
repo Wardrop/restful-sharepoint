@@ -1,4 +1,4 @@
-require 'json'
+require 'oj'
 require 'httpi'
 require 'curb'
 require 'cgi'

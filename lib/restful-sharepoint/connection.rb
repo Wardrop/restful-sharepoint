@@ -31,7 +31,7 @@ module RestfulSharePoint
       req = HTTPI::Request.new(url: url, headers: {'accept' => 'application/json; odata=verbose'})
       req.auth.ntlm(@username, @password) if @username
       if body
-        req.body = body.to_json.gsub('/', '\\/') # SharePoint requires forward slashes be escaped in JSON (WTF!!!)
+        req.body = Oj.dump(body).gsub('/', '\\/') # SharePoint requires forward slashes be escaped in JSON (WTF!!!)
         req.headers['Content-Type'] = 'application/json'
         req.headers['X-HTTP-Method'] = 'MERGE' # TODO: Extend logic to support all operations
         req.headers['If-Match'] = '*'
@@ -45,10 +45,7 @@ module RestfulSharePoint
         end
       else
         if response.headers['Content-Type'].start_with? "application/json"
-          ::File.write('dump.txt', response.body)
-          data_tree = parse(response.body)
-          ::File.write('dump.tree', Marshal.dump(data_tree))
-          data_tree
+          parse(response.body)
         else
           response.body
         end
@@ -79,8 +76,7 @@ module RestfulSharePoint
   protected
 
     def parse(str)
-      data = JSON.parse(str)
-      ::File.write('dump.json', data.to_json)
+      data = Oj.load(str)
       raise RestError, "(#{data['error']['code']}): #{data['error']['message']['value']}" if data['error']
       parse_tree(data['d'])
     end
