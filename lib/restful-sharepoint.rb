@@ -2,6 +2,7 @@ require 'json'
 require 'httpi'
 require 'curb'
 require 'cgi'
+require 'logger'
 
 HTTPI.adapter = :curb
 
@@ -20,6 +21,8 @@ module RestfulSharePoint
     /SP\.Data\..*Item/ => :ListItems,
     "SP.Attachment" => :Attachments
   }
+
+  LOG = Logger.new('restful-sharepoint.log')
 end
 
 require_relative './restful-sharepoint/version.rb'

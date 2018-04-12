@@ -1,15 +1,21 @@
 require 'date'
 require 'uri'
+require 'fileutils'
 
 module RestfulSharePoint
   class Connection
-    def initialize(site_url, username = nil, password = nil)
+    def initialize(site_url, username = nil, password = nil, debug: false)
       @site_url = site_url
       @username = username
       @password = password
+      @debug = debug
     end
 
     attr_reader :site_url
+
+    def get_as_object(path, options: {})
+      objectify(get(path, options: options))
+    end
 
     def get(path, options: {})
       request path, :get, options: options
@@ -30,7 +36,8 @@ module RestfulSharePoint
         req.headers['X-HTTP-Method'] = 'MERGE' # TODO: Extend logic to support all operations
         req.headers['If-Match'] = '*'
       end
-      yield(request) if block_given?
+      yield(req) if block_given?
+      LOG.info "Making HTTP request to: #{req.url.to_s}"
       response = HTTPI.request(method, req)
       if response.body.empty?
         if response.code >= 300
@@ -38,17 +45,42 @@ module RestfulSharePoint
         end
       else
         if response.headers['Content-Type'].start_with? "application/json"
+          ::File.write('dump.txt', response.body)
           data_tree = parse(response.body)
+          ::File.write('dump.tree', Marshal.dump(data_tree))
+          data_tree
         else
           response.body
         end
       end
     end
 
+    # Converts the given enumerable tree to a collection or object.
+    def objectify(tree, parent: nil)
+      if tree['results']
+        type = tree['__metadata']&.[]('type') || tree['results'][0]&.[]('__metadata')&.[]('type') || ''
+        pattern, klass = COLLECTION_MAP.any? { |pattern,| pattern.match(type) }
+        klass ||= :Collection
+        RestfulSharePoint.const_get(klass).new(connection: self, parent: parent, collection: tree['results'])
+      elsif tree['__metadata']
+        type = tree['__metadata']['type']
+        raise "Object type not specified. #{tree.inspect}" unless type
+        pattern, klass = OBJECT_MAP.find { |pattern,| pattern.match(type) }
+        klass ? RestfulSharePoint.const_get(klass).new(connection: self, parent: parent, properties: tree) : tree
+      else
+        tree
+      end
+    end
+
+    def objectified?(v)
+      CommonBase === v || !v.is_a?(Hash)
+    end
+
   protected
 
     def parse(str)
       data = JSON.parse(str)
+      ::File.write('dump.json', data.to_json)
       raise RestError, "(#{data['error']['code']}): #{data['error']['message']['value']}" if data['error']
       parse_tree(data['d'])
     end

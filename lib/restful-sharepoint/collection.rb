@@ -2,13 +2,18 @@ module RestfulSharePoint
   class Collection < CommonBase
     DEFAULT_OPTIONS = {}
 
+    include Enumerable
+    extend Forwardable
+
+    def_delegators :@collection, :each, :length, :[]
+
     def self.object_class
       Object
     end
 
     def initialize(parent: nil, connection: nil, collection: nil, options: {})
       @parent = parent
-      @connection = connection || @parent.connection # Iterate collection and coerce each into into a ListItem
+      @connection = @parent ? @parent.connection : connection
       self.collection = collection
       self.options = options
     end
@@ -22,24 +27,42 @@ module RestfulSharePoint
 
     attr_writer :endpoint
     def endpoint
-      @endpoint || (raise NotImplementedError, "Endpoint needs to be set")
+      @endpoint || (raise NotImplementedError, "Endpoint could not be determined")
     end
 
     def collection=(collection)
       @collection = collection
       @collection&.each_with_index do |v,i|
-        @collection[i] = objectify(v)
+        @collection[i] = connection.objectify(v)
       end
-      @properties
+      @collection
+    end
+
+    def ==(other)
+      other.== collection
+    end
+
+    def eql?(other)
+      other.eql? collection
     end
 
     def collection
       @collection || self.collection = connection.get(endpoint, options: @options)
     end
 
-    def values
-      collection.dup.each { |k,v| properties[k] = v.values if v.is_a?(Object) || v.is_a?(Collection) }
+    def to_a
+      collection.map do |v|
+        case v
+        when Object
+          v.to_h
+        when Collection
+          v.to_a
+        else
+          v
+        end
+      end
     end
+    alias to_array to_a
 
     def next
       self.new(@connection, @connection.get(collection['__next']))
@@ -47,14 +70,6 @@ module RestfulSharePoint
 
     def to_json(*args, &block)
       collection.to_json(*args, &block)
-    end
-
-    def method_missing(method, *args, &block)
-      collection.respond_to?(method) ? collection.send(method, *args, &block) : super
-    end
-
-    def respond_to_missing?(method, include_all = false)
-      collection.respond_to?(method, include_all)
     end
   end
 end
