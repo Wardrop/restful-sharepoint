@@ -15,5 +15,4 @@ Gem::Specification.new 'restful-sharepoint', RestfulSharePoint::VERSION do |s|
 
   s.add_dependency 'httpi', '~> 2.4'
   s.add_dependency 'curb', '~> 0.9'
-  s.add_dependency 'oj', '~>3.5'
 end
